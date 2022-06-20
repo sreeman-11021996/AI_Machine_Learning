@@ -2,39 +2,48 @@ import random
 import numpy as np
 
 class KMeans:
-    def __init__(self,n_clusters=2,max_iter=200,tol = 0.00001):
+    def __init__(self,n_clusters=2,max_iter=200,tol = 0.00001,n_init=10):
         self.n_clusters = n_clusters
         self.max_iter = max_iter
         #self.tol = tol
+        self.n_init = n_init
 
     def fit_predict(self,X):
-        X = np.array(X)
-        # 1. initialize centroids
-        random_indexes = random.sample(range(X.shape[0]),self.n_clusters)
-        self.centroids = X[random_indexes]
+        best_inertia = None
+        best_cluster_group = None
+        for _ in range(self.n_init):
+            # run k-means n_init times and select best result
+            X = np.array(X)
+            # 1. initialize centroids
+            random_indexes = random.sample(range(X.shape[0]),self.n_clusters)
+            self.centroids = X[random_indexes]
 
-        for iter in range(self.max_iter):
-            # 2. assign clusters
-            cluster_group = self.assign_clusters(X)
-            old_centroids = np.array(self.centroids)
-            # 3. move the clusters
-            self.centroids = self.get_new_centroids(X,cluster_group)
+            for iter in range(self.max_iter):
+                # 2. assign clusters
+                cluster_group = self.assign_clusters(X)
+                old_centroids = np.array(self.centroids)
+                # 3. move the clusters
+                self.centroids = self.get_new_centroids(X,cluster_group)
 
-            # 4. final check
-            if (old_centroids == self.centroids).all():
-                # calculate the inertia_
-                self.inertia_ = self.cal_inertia(X,cluster_group)
-                break
-            """optimized = True
-            for k in range(len(self.centroids)):
-                orig_centroid = old_centroids[k]
-                curr_centroid = self.centroids[k]
-                if np.sum((curr_centroid-orig_centroid)/orig_centroid*100) > self.tol:
-                    optimized = False
-            if optimized:
-                break"""
+                # 4. final check
+                if (old_centroids == self.centroids).all():
+                    # calculate the inertia_
+                    self.inertia_ = self.cal_inertia(X,cluster_group)
+                    break
+                """optimized = True
+                for k in range(len(self.centroids)):
+                    orig_centroid = old_centroids[k]
+                    curr_centroid = self.centroids[k]
+                    if np.sum((curr_centroid-orig_centroid)/orig_centroid*100) > self.tol:
+                        optimized = False
+                if optimized:
+                    break"""
 
-        return cluster_group
+            # we check for the minimum inertia_ kmeans
+            best_inertia,best_cluster_group = self.best_kmeans(best_inertia,
+                                            best_cluster_group,cluster_group)
+        self.inertia_ = best_inertia
+        return best_cluster_group
 
     def assign_clusters(self,X):
         distance = []
@@ -72,3 +81,9 @@ class KMeans:
             distance.clear()
 
         return np.sum(inertia_cluster)
+
+    def best_kmeans (self,best_inertia,best_cluster_group:np.ndarray,cluster_group):
+        if (best_inertia is None) or (best_inertia > self.inertia_):
+            best_inertia = self.inertia_
+            best_cluster_group = cluster_group
+        return best_inertia,best_cluster_group
