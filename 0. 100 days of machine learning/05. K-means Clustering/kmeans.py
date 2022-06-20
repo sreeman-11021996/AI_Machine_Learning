@@ -2,10 +2,10 @@ import random
 import numpy as np
 
 class KMeans:
-    def __init__(self,n_clusters=2,max_iter=200):
+    def __init__(self,n_clusters=2,max_iter=200,tol = 0.00001):
         self.n_clusters = n_clusters
         self.max_iter = max_iter
-        self.centroids = None
+        #self.tol = tol
 
     def fit_predict(self,X):
         X = np.array(X)
@@ -16,13 +16,23 @@ class KMeans:
         for iter in range(self.max_iter):
             # 2. assign clusters
             cluster_group = self.assign_clusters(X)
-            old_centroids = self.centroids
+            old_centroids = np.array(self.centroids)
             # 3. move the clusters
             self.centroids = self.get_new_centroids(X,cluster_group)
 
             # 4. final check
             if (old_centroids == self.centroids).all():
+                # calculate the inertia_
+                self.inertia_ = self.cal_inertia(X,cluster_group)
                 break
+            """optimized = True
+            for k in range(len(self.centroids)):
+                orig_centroid = old_centroids[k]
+                curr_centroid = self.centroids[k]
+                if np.sum((curr_centroid-orig_centroid)/orig_centroid*100) > self.tol:
+                    optimized = False
+            if optimized:
+                break"""
 
         return cluster_group
 
@@ -49,3 +59,16 @@ class KMeans:
 
         return np.array(new_centroids)
 
+    def cal_inertia (self,X,cluster_group):
+        distance = []
+        inertia_cluster = []
+        cluster_type = np.unique(cluster_group)
+        for type in cluster_type:
+            for point in X[cluster_group == type]:
+                # get the euclidean dist
+                distance.append(np.sqrt(np.dot(point-self.centroids[type],
+                                               point- self.centroids[type])))
+            inertia_cluster.append(np.sum(np.power(distance, 2)))
+            distance.clear()
+
+        return np.sum(inertia_cluster)

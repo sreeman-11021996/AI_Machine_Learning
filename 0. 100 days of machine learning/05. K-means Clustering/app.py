@@ -7,6 +7,7 @@ from kmeans import KMeans
 data = pd.read_csv("student_clustering.csv")
 km = KMeans(n_clusters=4,max_iter=100)
 y_means = km.fit_predict(data)
+print("Inertia - ",km.inertia_)
 # visualize
 #sns.scatterplot(data.iloc[:,0],data.iloc[:,1])
 #plt.show()
