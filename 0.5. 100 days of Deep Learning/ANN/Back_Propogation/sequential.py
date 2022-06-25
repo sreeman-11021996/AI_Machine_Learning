@@ -1,4 +1,11 @@
 import numpy as np
+import pandas as pd
+
+WTS = "w"
+BIAS = "b"
+OUTPUT = "a"
+X_ROW = 2
+X_COL = 1
 
 class sequential_:
 
@@ -21,12 +28,12 @@ class sequential_:
         wts, bias = self.init_params(curr_nodes,prev_nodes)
 
         # add the wts and bias to self.params_
-        self.params_["w"+str(self.layers_)] = wts
-        self.params_["b"+str(self.layers_)] = bias
+        self.params_[WTS+str(self.layers_)] = wts
+        self.params_[BIAS+str(self.layers_)] = bias
 
 
-    def init_params (self,curr_layer_nodes,prev_layer_nodes):
-        # Initializing wt = 1 and bias = 0
+    def init_params (self,curr_layer_nodes:int,prev_layer_nodes:int):
+        # Initializing wt = 0.1 and bias = 0
         wts = np.ones((curr_layer_nodes, prev_layer_nodes))*0.1
         bias = np.zeros((curr_layer_nodes,1))
         return wts,bias
@@ -36,24 +43,30 @@ class sequential_:
         self.loss = loss
         # Gradient Descent params
         self.lr = learning_rate
-        self.A = {}
+        self.outputs = {}
 
-    def summation_ (self,wts,bias,X):
-        z = np.dot(wts,X.T) + bias
+    def summation_ (self,wts:np.ndarray,bias:np.ndarray,X:np.ndarray):
+        z = np.dot(wts,X) + bias
         return z
 
     def forward_prop_ (self,X):
         A = X
+        for l in range(1,self.layers_+1):
+            wts = self.params_[WTS + str(l)]
+            bias = self.params_[BIAS + str(l)]
+            A = self.summation_(wts,bias,A)
+            self.outputs[OUTPUT+str(l)] = A
+        return A
 
-
-    def fit(self,X,y,epochs=100):
+    def fit(self,X:pd.core.frame.DataFrame,y:pd.core.frame.DataFrame,epochs=100):
         X = np.array(X)
         y = np.array(y)
 
         for epoch in range(epochs):
             for i in range(X.shape[0]):
                 # Get a random number
-                Xi = X[i]
+                Xi = X[i].reshape(X_ROW,X_COL)
                 yi = y[i]
 
                 # Predict for this value
+                y_predi = self.forward_prop_(Xi)
